@@ -1,13 +1,11 @@
-const Discord = require("discord.js");
+const Discord = require('discord.js');
 const client = new Discord.Client();
-const fs = require("fs");
-const {
-  token,
-  prefix,
-  defaultCooldownAmount,
-} = require("./config/config.json");
-const AsciiTable = require("ascii-table/ascii-table");
-const evtTable = new AsciiTable("Events");
+const fs = require('fs');
+const { prefix, defaultCooldownAmount } = require('./config/config.json');
+const AsciiTable = require('ascii-table/ascii-table');
+const evtTable = new AsciiTable('Events');
+
+const { token } = process.env;
 
 const cooldowns = new Discord.Collection();
 
@@ -15,8 +13,8 @@ const cooldowns = new Discord.Collection();
 client.commands = new Discord.Collection();
 
 const cmdFiles = fs
-  .readdirSync("./commands")
-  .filter((file) => file.endsWith(".js"));
+  .readdirSync('./commands')
+  .filter((file) => file.endsWith('.js'));
 
 for (const file of cmdFiles) {
   const cmd = require(`./commands/${file}`);
@@ -24,7 +22,7 @@ for (const file of cmdFiles) {
 }
 
 // Commands or something
-client.on("message", (message) => {
+client.on('message', (message) => {
   if (!message.content.startsWith(prefix) || message.author.bot) return;
 
   const args = message.content.slice(prefix.length).trim().split(/ +/);
@@ -48,7 +46,7 @@ client.on("message", (message) => {
     }
     return message.channel.send(reply);
   }
-  if (command.guildOnly && message.channel.type !== "text") {
+  if (command.guildOnly && message.channel.type !== 'text') {
     return message.reply("I can't execute that command inside DMs!");
   }
 
@@ -91,16 +89,16 @@ client.on("message", (message) => {
   }
 });
 
-fs.readdir("./events/", (err, files) => {
+fs.readdir('./events/', (err, files) => {
   if (err) {
-    evtTable.addRow("Unloaded event", "❌");
+    evtTable.addRow('Unloaded event', '❌');
     console.error(err);
   }
   files.forEach((file) => {
-    if (!file.endsWith(".js")) return;
+    if (!file.endsWith('.js')) return;
     const evt = require(`./events/${file}`);
-    let evtName = file.split(".")[0];
-    evtTable.addRow(`${evtName}`, "✅");
+    let evtName = file.split('.')[0];
+    evtTable.addRow(`${evtName}`, '✅');
     client.on(evtName, evt.bind(null, client));
   });
 });
