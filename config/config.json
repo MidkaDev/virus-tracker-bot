@@ -1,0 +1,6 @@
+{
+  "token": "TOKEN",
+  "defaultCooldownAmount": 3,
+  "prefix": "!",
+  "version": "1.0.0"
+}
