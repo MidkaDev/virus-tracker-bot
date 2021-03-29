@@ -1,7 +1,15 @@
-module.exports = {
-  name: "reload",
-  description: "Reloads a command",
-  execute(message, args) {
+import { Message } from 'discord.js';
+import { Command } from '../types';
+
+export const command: Command = {
+  name: 'reload',
+  description: 'Reloads a command',
+  usage: '<command>',
+  guildOnly: false,
+  cooldown: 5,
+  args: false,
+
+  execute(message: Message, args: string[]) {
     if (!args.length)
       return message.channel.send(
         `You didn't pass any command to reload, ${message.author}!`
@@ -10,7 +18,7 @@ module.exports = {
     const command =
       message.client.commands.get(commandName) ||
       message.client.commands.find(
-        (cmd) => cmd.aliases && cmd.aliases.includes(commandName)
+        (cmd: Command) => cmd.aliases && cmd.aliases.includes(commandName)
       );
 
     if (!command)

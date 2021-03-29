@@ -1,40 +1,47 @@
-const Discord = require('discord.js');
-const client = new Discord.Client();
-const fs = require('fs');
-const { prefix, defaultCooldownAmount } = require('./config/config.json');
-const AsciiTable = require('ascii-table/ascii-table');
-const evtTable = new AsciiTable('Events');
+require('dotenv').config();
+import * as fs from 'fs';
+import * as Discord from 'discord.js';
+import { Message } from 'discord.js';
+import { Command } from './types';
 
+import { prefix, defaultCooldownAmount } from './config/config.json';
 const { token } = process.env;
 
+const client = new Discord.Client();
+
+// Cooldown list
 const cooldowns = new Discord.Collection();
 
 // Command Handler
 client.commands = new Discord.Collection();
 
+// Reading all files in commands directory
 const cmdFiles = fs
   .readdirSync('./commands')
-  .filter((file) => file.endsWith('.js'));
+  .filter((file: string) => file.endsWith('.js'));
 
 for (const file of cmdFiles) {
-  const cmd = require(`./commands/${file}`);
-  client.commands.set(cmd.name, cmd);
+  const cmd: Command = require(`./commands/${file}`);
+  console.log(JSON.stringify(cmd));
+  client.commands.set(cmd.command!.name, cmd.command!);
 }
 
 // Commands or something
-client.on('message', (message) => {
+client.on('message', (message: Message) => {
   if (!message.content.startsWith(prefix) || message.author.bot) return;
 
-  const args = message.content.slice(prefix.length).trim().split(/ +/);
-  const commandName = args.shift().toLowerCase();
+  const args: string[] = message.content
+    .slice(prefix.length)
+    .trim()
+    .split(/ +/);
 
-  const command =
+  const commandName = args.shift()?.toLowerCase();
+
+  const command: Command =
     client.commands.get(commandName) ||
     client.commands.find(
-      (cmd) => cmd.aliases && cmd.aliases.includes(commandName)
+      (cmd: Command) => cmd.aliases && cmd.aliases.includes(commandName!)
     );
-
-  if (!client.commands.has(command.name)) return;
 
   if (!command) return;
 
@@ -56,13 +63,13 @@ client.on('message', (message) => {
 
   if (
     command.permission &&
-    !message.member.permissions.cache.has(command.permission)
+    !message.member?.permissions.has(command.permission)
   ) {
     return message.reply(`No permission! Required: ${command.permission}`);
   }
 
   const now = Date.now();
-  const timestamps = cooldowns.get(command.name);
+  const timestamps: any = cooldowns.get(command.name);
   const cooldownAmount = (command.cooldown || defaultCooldownAmount) * 1000;
 
   if (timestamps.has(message.author.id)) {
@@ -85,25 +92,20 @@ client.on('message', (message) => {
     command.execute(message, args);
   } catch (error) {
     console.error(error);
-    message.reply();
+    message.reply('An error occurred');
   }
 });
 
-fs.readdir('./events/', (err, files) => {
+fs.readdir('./events/', (err: any, files: string[]) => {
   if (err) {
-    evtTable.addRow('Unloaded event', '❌');
     console.error(err);
   }
-  files.forEach((file) => {
+  files.forEach((file: string) => {
     if (!file.endsWith('.js')) return;
     const evt = require(`./events/${file}`);
     let evtName = file.split('.')[0];
-    evtTable.addRow(`${evtName}`, '✅');
     client.on(evtName, evt.bind(null, client));
   });
 });
-
-// Showing evtTable
-console.log(evtTable.toString());
 
 client.login(token);
